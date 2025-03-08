@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useToast } from "@/components/ui/use-toast"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { SupabaseClient } from '@supabase/supabase-js'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
 interface AnalyticsDashboardProps {
   supabase: SupabaseClient
@@ -15,150 +15,126 @@ export function AnalyticsDashboard({ supabase }: AnalyticsDashboardProps) {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalJobs: 0,
-    totalProjects: 0,
-    totalRevenue: 0,
+    totalApplications: 0,
+    totalMessages: 0,
   })
-  const [monthlyData, setMonthlyData] = useState([])
 
-  useEffect(() => {
-    fetchStats()
-    fetchMonthlyData()
-  }, [])
-
-  const fetchStats = async () => {
+  const fetchAnalytics = async () => {
     try {
-      const { data: users, error: usersError } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact" })
+      // Fetch total users
+      const { count: userCount, error: userError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
 
-      const { data: jobs, error: jobsError } = await supabase
-        .from("jobs")
-        .select("*", { count: "exact" })
+      if (userError) throw userError
 
-      const { data: projects, error: projectsError } = await supabase
-        .from("projects")
-        .select("id, amount", { count: "exact" })
+      // Fetch total jobs
+      const { count: jobCount, error: jobError } = await supabase
+        .from('jobs')
+        .select('*', { count: 'exact', head: true })
 
-      if (usersError || jobsError || projectsError) {
-        throw new Error("Failed to fetch analytics data")
-      }
+      if (jobError) throw jobError
 
-      const totalRevenue = projects?.reduce((sum, project) => sum + (project.amount || 0), 0) || 0
-      const totalUsers = users?.length || 0
-      const totalJobs = jobs?.length || 0
+      // Fetch total applications
+      const { count: applicationCount, error: applicationError } = await supabase
+        .from('applications')
+        .select('*', { count: 'exact', head: true })
+
+      if (applicationError) throw applicationError
+
+      // Fetch total messages
+      const { count: messageCount, error: messageError } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+
+      if (messageError) throw messageError
 
       setStats({
-        totalUsers,
-        totalJobs,
-        totalProjects: projects?.length || 0,
-        totalRevenue,
+        totalUsers: userCount || 0,
+        totalJobs: jobCount || 0,
+        totalApplications: applicationCount || 0,
+        totalMessages: messageCount || 0,
       })
     } catch (error) {
-      console.error("Error fetching analytics:", error)
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
       toast({
         title: "Error fetching analytics",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       })
     }
   }
 
-  const fetchMonthlyData = async () => {
-    try {
-      const { data: projects, error } = await supabase
-        .from("projects")
-        .select("created_at, amount")
-        .order("created_at")
+  useEffect(() => {
+    fetchAnalytics()
+  }, [])
 
-      if (error) throw error
-
-      const monthlyStats = projects.reduce((acc, project) => {
-        const date = new Date(project.created_at)
-        const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`
-
-        if (!acc[monthYear]) {
-          acc[monthYear] = {
-            name: monthYear,
-            revenue: 0,
-            projects: 0,
-          }
-        }
-
-        acc[monthYear].revenue += project.amount
-        acc[monthYear].projects += 1
-
-        return acc
-      }, {})
-
-      setMonthlyData(Object.values(monthlyStats))
-    } catch (error) {
-      toast({
-        title: "Error fetching monthly data",
-        description: error.message,
-        variant: "destructive",
-      })
-    }
-  }
+  const data = [
+    {
+      name: 'Users',
+      value: stats.totalUsers,
+    },
+    {
+      name: 'Jobs',
+      value: stats.totalJobs,
+    },
+    {
+      name: 'Applications',
+      value: stats.totalApplications,
+    },
+    {
+      name: 'Messages',
+      value: stats.totalMessages,
+    },
+  ]
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">Analytics Dashboard</h1>
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalJobs}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProjects}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="col-span-4">
-        <CardHeader>
-          <CardTitle>Monthly Revenue & Projects</CardTitle>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Users</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-                <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
-                <Tooltip />
-                <Legend />
-                <Bar yAxisId="left" dataKey="revenue" fill="#8884d8" name="Revenue ($)" />
-                <Bar yAxisId="right" dataKey="projects" fill="#82ca9d" name="Projects" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <div className="text-2xl font-bold">{stats.totalUsers}</div>
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalJobs}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalApplications}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalMessages}</div>
+        </CardContent>
+      </Card>
+
+      <div className="col-span-4 h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="value" fill="#8884d8" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }

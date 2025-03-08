@@ -4,8 +4,13 @@ import { useState, useEffect } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { SupabaseClient } from '@supabase/supabase-js'
 
-export function AnalyticsDashboard({ supabase }) {
+interface AnalyticsDashboardProps {
+  supabase: SupabaseClient
+}
+
+export function AnalyticsDashboard({ supabase }: AnalyticsDashboardProps) {
   const { toast } = useToast()
   const [stats, setStats] = useState({
     totalUsers: 0,

@@ -1,33 +1,67 @@
-"use client"
+'use client'
 
 import { useState } from "react"
-import { useSupabase } from "@/components/providers/supabase-provider"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
 import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/components/ui/use-toast"
 
-const skillTests = [
-  { id: 1, name: "Web Development", questions: 20 },
-  { id: 2, name: "Graphic Design", questions: 15 },
-  { id: 3, name: "Content Writing", questions: 25 },
-  { id: 4, name: "Digital Marketing", questions: 18 },
+interface SkillTest {
+  id: string
+  name: string
+  description: string
+  duration: number
+  questions: number
+}
+
+const availableTests: SkillTest[] = [
+  {
+    id: "web-dev",
+    name: "Web Development",
+    description: "Test your knowledge of HTML, CSS, and JavaScript",
+    duration: 30,
+    questions: 20,
+  },
+  {
+    id: "react",
+    name: "React",
+    description: "Assess your React and modern frontend development skills",
+    duration: 45,
+    questions: 25,
+  },
+  {
+    id: "node",
+    name: "Node.js",
+    description: "Evaluate your Node.js and backend development expertise",
+    duration: 40,
+    questions: 22,
+  },
 ]
 
-export default function SkillAssessment() {
-  const { supabase, user } = useSupabase()
-  const { toast } = useToast()
-  const [currentTest, setCurrentTest] = useState(null)
+export default function SkillsPage() {
+  const [currentTest, setCurrentTest] = useState<SkillTest | null>(null)
   const [progress, setProgress] = useState(0)
+  const { toast } = useToast()
 
-  const startTest = (test) => {
+  const startTest = (test: SkillTest) => {
     setCurrentTest(test)
     setProgress(0)
     // Here you would typically fetch the actual test questions from your backend
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          return 100
+        }
+        return prev + 1
+      })
+    }, (test.duration * 1000) / 100)
   }
 
   const submitAnswer = () => {
-    // Here you would typically submit the answer to your backend
+    if (!currentTest) return
+
     const newProgress = Math.min(progress + 100 / currentTest.questions, 100)
     setProgress(newProgress)
 
@@ -40,41 +74,57 @@ export default function SkillAssessment() {
     }
   }
 
-  return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Skill Assessment</h1>
-
-      {!currentTest ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {skillTests.map((test) => (
-            <Card key={test.id}>
-              <CardHeader>
-                <CardTitle>{test.name}</CardTitle>
-                <CardDescription>{test.questions} questions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => startTest(test)}>Start Test</Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
+  if (currentTest) {
+    return (
+      <div className="container mx-auto py-8">
         <Card>
           <CardHeader>
-            <CardTitle>{currentTest.name} Test</CardTitle>
-            <CardDescription>
-              Question {Math.ceil(progress / (100 / currentTest.questions))} of {currentTest.questions}
-            </CardDescription>
+            <CardTitle>{currentTest.name} Assessment</CardTitle>
+            <CardDescription>Time remaining: {Math.ceil((currentTest.duration * (100 - progress)) / 100)} seconds</CardDescription>
           </CardHeader>
           <CardContent>
             <Progress value={progress} className="mb-4" />
-            {/* Here you would typically render the current question */}
-            <p className="mb-4">Sample question text would go here...</p>
-            <Button onClick={submitAnswer}>Submit Answer</Button>
+            <div className="space-y-4">
+              {/* Here you would render the actual test questions */}
+              <p>Test questions would be displayed here...</p>
+              <Button onClick={submitAnswer}>Submit Answer</Button>
+            </div>
+            <Button
+              className="mt-4"
+              variant="secondary"
+              onClick={() => {
+                setCurrentTest(null)
+                setProgress(0)
+              }}
+            >
+              Cancel Test
+            </Button>
           </CardContent>
         </Card>
-      )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto py-8">
+      <h1 className="text-2xl font-bold mb-6">Skill Assessments</h1>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {availableTests.map((test) => (
+          <Card key={test.id}>
+            <CardHeader>
+              <CardTitle>{test.name}</CardTitle>
+              <CardDescription>{test.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <Badge variant="secondary">{test.duration} mins</Badge>
+                <Badge variant="secondary">{test.questions} questions</Badge>
+              </div>
+              <Button onClick={() => startTest(test)}>Start Assessment</Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }
-

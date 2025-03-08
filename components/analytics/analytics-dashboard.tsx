@@ -5,9 +5,10 @@ import { useToast } from "@/components/ui/use-toast"
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { Database } from '@/types/supabase'
 
 interface AnalyticsDashboardProps {
-  supabase: SupabaseClient
+  supabase: SupabaseClient<Database>
 }
 
 export function AnalyticsDashboard({ supabase }: AnalyticsDashboardProps) {
@@ -18,6 +19,10 @@ export function AnalyticsDashboard({ supabase }: AnalyticsDashboardProps) {
     totalApplications: 0,
     totalMessages: 0,
   })
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [])
 
   const fetchAnalytics = async () => {
     try {
@@ -64,10 +69,6 @@ export function AnalyticsDashboard({ supabase }: AnalyticsDashboardProps) {
       })
     }
   }
-
-  useEffect(() => {
-    fetchAnalytics()
-  }, [])
 
   const data = [
     {

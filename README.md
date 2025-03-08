@@ -2,6 +2,17 @@
 
 An AI-powered freelance marketplace that connects skilled freelancers with exciting projects.
 
+In the project settings:
+Framework Preset: Next.js
+Build Command: next build
+Output Directory: .next
+Install Command: npm install
+Development Command: next dev
+
+NEXT_PUBLIC_SUPABASE_URL=https://hzaoxrubaprshvidnzig.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6YW94cnViYXByc2h2aWRuemlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzNjU1MzMsImV4cCI6MjA1Njk0MTUzM30.0eVbnOXItbc6BM5RVRks31shR3WsuTSgRAzBp4LIiKo
+NEXT_PUBLIC_APP_URL=[your-vercel-url] # You'll get this after deployment
+SUPABASE_SERVICE_ROLE_KEY=[your-service-role-key]
 ## Features
 
 - AI-powered matching system

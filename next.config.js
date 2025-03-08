@@ -60,4 +60,6 @@ const nextConfig = {
       },
     ]
   },
+  // Output as standalone for better Vercel deployment
+  output: 'standalone',
 }
